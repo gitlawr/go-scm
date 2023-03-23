@@ -65,13 +65,7 @@ func (s *gitService) createTree(ctx context.Context, repo string, opts *scm.Comm
 	in.Owner = owner
 	in.Repo = repo
 	for _, b := range opts.Blobs {
-		in.Tree = append(in.Tree, struct {
-			Path    string `json:"path"`
-			Mode    string `json:"mode"`
-			Type    string `json:"type"`
-			Sha     string `json:"sha"`
-			Content string `json:"content"`
-		}{
+		in.Tree = append(in.Tree, blob{
 			Path:    b.Path,
 			Mode:    b.Mode,
 			Type:    "blob",
@@ -188,11 +182,11 @@ type gitTree struct {
 }
 
 type blob struct {
-	Path    string `json:"path"`
-	Mode    string `json:"mode"`
-	Type    string `json:"type"`
-	Sha     string `json:"sha"`
-	Content string `json:"content"`
+	Path    string `json:"path,omitempty"`
+	Mode    string `json:"mode,omitempty"`
+	Type    string `json:"type,omitempty"`
+	Sha     string `json:"sha,omitempty"`
+	Content string `json:"content,omitempty"`
 }
 
 type ref struct {
