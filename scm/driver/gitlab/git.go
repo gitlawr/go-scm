@@ -6,6 +6,7 @@ package gitlab
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -58,6 +59,10 @@ func (s *gitService) ListBranches(ctx context.Context, repo string, opts scm.Lis
 	out := []*branch{}
 	res, err := s.client.do(ctx, "GET", path, nil, &out)
 	return convertBranchList(out), res, err
+}
+
+func (s *gitService) CreateCommit(ctx context.Context, repo string, opts *scm.CommitInput) (*scm.Commit, *scm.Response, error) {
+	return nil, nil, errors.New("unimplemented")
 }
 
 func (s *gitService) ListCommits(ctx context.Context, repo string, opts scm.CommitListOptions) ([]*scm.Commit, *scm.Response, error) {

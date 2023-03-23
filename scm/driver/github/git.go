@@ -32,6 +32,57 @@ func (s *gitService) FindBranch(ctx context.Context, repo, name string) (*scm.Re
 	return convertBranch(out), res, err
 }
 
+func (s *gitService) CreateCommit(ctx context.Context, repo string, opts *scm.CommitInput) (*scm.Commit, *scm.Response, error) {
+	tree, res, err := s.createTree(ctx, repo, opts)
+	if err != nil {
+		return nil, res, err
+	}
+
+	gcommit, res, err := s.createGitCommit(ctx, repo, tree.Sha, opts.Message)
+	if err != nil {
+		return nil, res, err
+	}
+	out := new(commit)
+	out.URL = gcommit.URL
+	out.Sha = gcommit.Sha
+	return convertCommit(out), res, err
+}
+
+func (s *gitService) createGitCommit(ctx context.Context, repo, tree, message string) (*gitCommit, *scm.Response, error) {
+	path := fmt.Sprintf("repos/%s/git/commits", repo)
+	in := new(gitCommit)
+	in.Message = message
+	in.Tree = tree
+	out := new(gitCommit)
+	res, err := s.client.do(ctx, "POST", path, in, out)
+	return out, res, err
+}
+func (s *gitService) createTree(ctx context.Context, repo string, opts *scm.CommitInput) (*gitTree, *scm.Response, error) {
+	path := fmt.Sprintf("repos/%s/git/trees", repo)
+	owner, repo := scm.Split(repo)
+	in := new(gitTree)
+	in.BaseTree = opts.Base
+	in.Owner = owner
+	in.Repo = repo
+	for _, b := range opts.Blobs {
+		in.Tree = append(in.Tree, struct {
+			Path    string `json:"path"`
+			Mode    string `json:"mode"`
+			Type    string `json:"type"`
+			Sha     string `json:"sha"`
+			Content string `json:"content"`
+		}{
+			Path:    b.Path,
+			Mode:    b.Mode,
+			Type:    "blob",
+			Content: b.Content,
+		})
+	}
+	out := new(gitTree)
+	res, err := s.client.do(ctx, "POST", path, in, out)
+	return out, res, err
+}
+
 func (s *gitService) FindCommit(ctx context.Context, repo, ref string) (*scm.Commit, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/commits/%s", repo, ref)
 	out := new(commit)
@@ -117,6 +168,31 @@ type commit struct {
 		Login     string `json:"login"`
 	} `json:"committer"`
 	Files []*file `json:"files"`
+}
+
+type gitCommit struct {
+	Sha     string `json:"sha"`
+	NodeID  string `json:"node_id"`
+	URL     string `json:"url"`
+	Message string `json:"message"`
+	Tree    string `json:"tree"`
+}
+
+type gitTree struct {
+	Sha      string `json:"sha"`
+	URL      string `json:"url"`
+	Owner    string `json:"owner"`
+	Repo     string `json:"repo"`
+	Tree     []blob `json:"tree"`
+	BaseTree string `json:"base_tree"`
+}
+
+type blob struct {
+	Path    string `json:"path"`
+	Mode    string `json:"mode"`
+	Type    string `json:"type"`
+	Sha     string `json:"sha"`
+	Content string `json:"content"`
 }
 
 type ref struct {
