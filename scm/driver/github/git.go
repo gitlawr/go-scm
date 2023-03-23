@@ -48,12 +48,12 @@ func (s *gitService) CreateCommit(ctx context.Context, repo string, opts *scm.Co
 	return convertCommit(out), res, err
 }
 
-func (s *gitService) createGitCommit(ctx context.Context, repo, tree, message string) (*gitCommit, *scm.Response, error) {
+func (s *gitService) createGitCommit(ctx context.Context, repo, tree, message string) (*gitCommitResponse, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/git/commits", repo)
-	in := new(gitCommit)
+	in := new(gitCommitRequest)
 	in.Message = message
 	in.Tree = tree
-	out := new(gitCommit)
+	out := new(gitCommitResponse)
 	res, err := s.client.do(ctx, "POST", path, in, out)
 	return out, res, err
 }
@@ -164,14 +164,15 @@ type commit struct {
 	Files []*file `json:"files"`
 }
 
-type gitCommit struct {
-	Sha     string `json:"sha"`
-	NodeID  string `json:"node_id"`
-	URL     string `json:"url"`
+type gitCommitRequest struct {
 	Message string `json:"message"`
 	Tree    string `json:"tree"`
 }
 
+type gitCommitResponse struct {
+	Sha string `json:"sha"`
+	URL string `json:"url"`
+}
 type gitTree struct {
 	Sha      string `json:"sha"`
 	URL      string `json:"url"`
