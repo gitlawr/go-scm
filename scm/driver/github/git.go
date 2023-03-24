@@ -42,6 +42,7 @@ func (s *gitService) CreateCommit(ctx context.Context, repo string, opts *scm.Co
 	if err != nil {
 		return nil, res, err
 	}
+
 	out := new(commit)
 	out.URL = gcommit.URL
 	out.Sha = gcommit.Sha
@@ -57,6 +58,7 @@ func (s *gitService) createGitCommit(ctx context.Context, repo, tree, message st
 	res, err := s.client.do(ctx, "POST", path, in, out)
 	return out, res, err
 }
+
 func (s *gitService) createTree(ctx context.Context, repo string, opts *scm.CommitInput) (*gitTree, *scm.Response, error) {
 	path := fmt.Sprintf("repos/%s/git/trees", repo)
 	owner, repo := scm.Split(repo)
@@ -68,7 +70,7 @@ func (s *gitService) createTree(ctx context.Context, repo string, opts *scm.Comm
 		in.Tree = append(in.Tree, blob{
 			Path:    b.Path,
 			Mode:    b.Mode,
-			Type:    "blob",
+			Type:    "commit",
 			Content: b.Content,
 		})
 	}
@@ -173,6 +175,7 @@ type gitCommitResponse struct {
 	Sha string `json:"sha"`
 	URL string `json:"url"`
 }
+
 type gitTree struct {
 	Sha      string `json:"sha"`
 	URL      string `json:"url"`
