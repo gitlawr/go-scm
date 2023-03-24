@@ -38,25 +38,22 @@ func (s *gitService) CreateCommit(ctx context.Context, repo string, opts *scm.Co
 		return nil, res, err
 	}
 
-	gcommit, res, err := s.createGitCommit(ctx, repo, tree.Sha, opts.Message)
+	path := fmt.Sprintf("repos/%s/git/commits", repo)
+	in := new(commitInput)
+	in.Message = opts.Message
+	in.Tree = tree.Sha
+	in.Parents = []commitParent{
+		{
+			Sha: opts.Base,
+		},
+	}
+	out := new(commit)
+	res, err = s.client.do(ctx, "POST", path, in, out)
 	if err != nil {
 		return nil, res, err
 	}
 
-	out := new(commit)
-	out.URL = gcommit.URL
-	out.Sha = gcommit.Sha
 	return convertCommit(out), res, err
-}
-
-func (s *gitService) createGitCommit(ctx context.Context, repo, tree, message string) (*gitCommitResponse, *scm.Response, error) {
-	path := fmt.Sprintf("repos/%s/git/commits", repo)
-	in := new(gitCommitRequest)
-	in.Message = message
-	in.Tree = tree
-	out := new(gitCommitResponse)
-	res, err := s.client.do(ctx, "POST", path, in, out)
-	return out, res, err
 }
 
 func (s *gitService) createTree(ctx context.Context, repo string, opts *scm.CommitInput) (*gitTree, *scm.Response, error) {
@@ -166,12 +163,17 @@ type commit struct {
 	Files []*file `json:"files"`
 }
 
-type gitCommitRequest struct {
-	Message string `json:"message"`
-	Tree    string `json:"tree"`
+type commitInput struct {
+	Message string         `json:"message"`
+	Tree    string         `json:"tree"`
+	Parents []commitParent `json:"parents"`
 }
 
-type gitCommitResponse struct {
+type commitParent struct {
+	Sha string `json:"sha"`
+}
+
+type commitOutput struct {
 	Sha string `json:"sha"`
 	URL string `json:"url"`
 }
