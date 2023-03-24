@@ -42,11 +42,7 @@ func (s *gitService) CreateCommit(ctx context.Context, repo string, opts *scm.Co
 	in := new(commitInput)
 	in.Message = opts.Message
 	in.Tree = tree.Sha
-	in.Parents = []commitParent{
-		{
-			Sha: opts.Base,
-		},
-	}
+	in.Parents = []string{opts.Base}
 	out := new(commit)
 	res, err = s.client.do(ctx, "POST", path, in, out)
 	if err != nil {
@@ -164,18 +160,9 @@ type commit struct {
 }
 
 type commitInput struct {
-	Message string         `json:"message"`
-	Tree    string         `json:"tree"`
-	Parents []commitParent `json:"parents"`
-}
-
-type commitParent struct {
-	Sha string `json:"sha"`
-}
-
-type commitOutput struct {
-	Sha string `json:"sha"`
-	URL string `json:"url"`
+	Message string   `json:"message"`
+	Tree    string   `json:"tree"`
+	Parents []string `json:"parents"`
 }
 
 type gitTree struct {
